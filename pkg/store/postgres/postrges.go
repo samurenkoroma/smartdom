@@ -47,17 +47,17 @@ func initDefaultEnv() error {
 		}
 	}
 	if len(os.Getenv("PGDATABASE")) == 0 {
-		if err := os.Setenv("PGDATABASE", "library"); err != nil {
+		if err := os.Setenv("PGDATABASE", "smartdom"); err != nil {
 			return errors.WithStack(err)
 		}
 	}
 	if len(os.Getenv("PGUSER")) == 0 {
-		if err := os.Setenv("PGUSER", "library"); err != nil {
+		if err := os.Setenv("PGUSER", "smartdom"); err != nil {
 			return errors.WithStack(err)
 		}
 	}
 	if len(os.Getenv("PGPASSWORD")) == 0 {
-		if err := os.Setenv("PGPASSWORD", "library"); err != nil {
+		if err := os.Setenv("PGPASSWORD", "smartdom"); err != nil {
 			return errors.WithStack(err)
 		}
 	}
