@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$USER_HOME$/Downloads/slutm-capng/cleanarch/.idea/cleanarch.iml" filepath="$USER_HOME$/Downloads/slutm-capng/cleanarch/.idea/cleanarch.iml" />
+      <module fileurl="file://$USER_HOME$/Education/golang/.idea/golang.iml" filepath="$USER_HOME$/Education/golang/.idea/golang.iml" />
+      <module fileurl="file://$PROJECT_DIR$/.idea/library.iml" filepath="$PROJECT_DIR$/.idea/library.iml" />
+    </modules>
+  </component>
+</project>

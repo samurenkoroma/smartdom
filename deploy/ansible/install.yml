@@ -1,0 +1,9 @@
+---
+
+- hosts: my.dom
+  become: true
+  roles:
+#    - nginx
+#    - dns
+#    - dlna
+    - transmission

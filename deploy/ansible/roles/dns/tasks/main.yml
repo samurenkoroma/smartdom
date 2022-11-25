@@ -1,0 +1,24 @@
+---
+# tasks file for dns
+- name: install bind packages
+  apt: name={{ item }} state=latest
+  with_items:
+    - bind9
+    - bind9-utils
+    - resolvconf
+- name: copy named.conf.options
+  copy:
+    src: "{{ item }}"
+    dest: /etc/bind/
+    owner: root
+    group: bind
+    mode: 0640
+  with_items:
+    - named.conf.options
+    - named.conf.local
+    - my.dom
+- name: ensure named is running and enabled
+  service:
+    name: bind9
+    state: restarted
+    enabled: yes

@@ -1,0 +1,5 @@
+---
+hostname: my.dom
+user: ubuntu
+cgi_port: 9001
+root: /var/www/vhosts

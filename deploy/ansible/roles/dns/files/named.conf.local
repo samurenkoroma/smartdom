@@ -1,0 +1,6 @@
+// prime the server with knowledge of the root servers
+
+zone "my.dom" {
+    type master;
+    file "/etc/bind/my.dom";
+};

@@ -1,0 +1,38 @@
+version: "3"
+
+volumes:
+  postgresdata:
+  mongodata:
+
+services:
+  mongo-db:
+    image: mongo
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodata:/data/db
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: library
+      MONGO_INITDB_ROOT_PASSWORD: library
+  postgres-db:
+    image: postgres:14.6-alpine
+    restart: unless-stopped
+    volumes:
+      - postgresdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_PASSWORD: library
+      POSTGRES_USER: library
+      POSTGRES_DB: library
+#  keycloak:
+#    image: quay.io/keycloak/keycloak:18.0.0
+#    ports:
+#      - "8080:8080"
+#    environment:
+#      - KEYCLOAK_ADMIN=admin
+#      - KEYCLOAK_ADMIN_PASSWORD=admin
+#    tty: true
+#    command:
+#      - start-dev

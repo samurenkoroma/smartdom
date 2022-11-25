@@ -1,0 +1,14 @@
+---
+- name: Install Nginx
+  apt:
+    name: nginx
+    state: latest
+  register: nginxinstalled
+  notify:
+      - nginx start
+
+- name: Add NGINX config
+  when: nginxinstalled.failed == false
+  template:
+    src: "{{ hostname }}.conf"
+    dest: /etc/nginx/sites-available/{{ hostname }}.conf

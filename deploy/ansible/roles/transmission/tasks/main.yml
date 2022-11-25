@@ -1,0 +1,19 @@
+---
+- name: install transmission-daemon
+  apt:
+    name: transmission-daemon
+    state: latest
+- name: copy config files transmission-daemon
+  copy:
+    src: "{{ item }}"
+    dest: /etc/transmission-daemon/
+    owner: debian-transmission
+    group: debian-transmission
+    mode: 0600
+  with_items:
+    - settings.json
+- name: restart transmission-daemon
+  service:
+    name: transmission-daemon
+    state: restarted
+    enabled: yes

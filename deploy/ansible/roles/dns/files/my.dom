@@ -1,0 +1,16 @@
+;
+; BIND data file for local loopback interface
+;
+$TTL	604800
+@	IN	SOA	ns.my.dom. ns.my.dom. (
+			      2		; Serial
+			 604800		; Refresh
+			  86400		; Retry
+			2419200		; Expire
+			 604800 )	; Negative Cache TTL
+;
+@	IN	NS	ns.my.dom.
+@	IN	A     192.168.31.162
+ns	IN	A     192.168.31.162
+core	IN	A     192.168.31.162
+@	IN	AAAA	::1

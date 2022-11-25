@@ -1,0 +1,22 @@
+---
+# tasks file for dns
+- name: install media packages
+  apt: name={{ item }} state=latest
+  with_items:
+    - minidlna
+- name: copy config files
+  copy:
+    src: "{{ item }}"
+    dest: /etc
+    owner: root
+    group: root
+    mode: 0644
+  with_items:
+    - minidlna.conf
+- name: ensure named is running and enabled
+  service:
+    name: minidlna
+    state: restarted
+    enabled: yes
+
+    /dev/sda1: LABEL="Seagate Basic" UUID="42E06D90E06D8B4D" TYPE="ntfs" PTTYPE="atari" PARTUUID="ab55c11c-01"

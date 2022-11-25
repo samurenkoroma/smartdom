@@ -1,0 +1,19 @@
+@startmindmap
+'https://plantuml.com/mindmap-diagram
+
+
+* Проекты
+** Огород
+*** Овощи
+**** Огурцы
+**** Томат
+**** Морковь
+**** Свёкла
+*** Грибы
+
+
+
+** Tiun
+** Библиотека
+
+@endmindmap
