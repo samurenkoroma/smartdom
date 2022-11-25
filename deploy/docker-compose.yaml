@@ -13,8 +13,8 @@ services:
     volumes:
       - mongodata:/data/db
     environment:
-      MONGO_INITDB_ROOT_USERNAME: library
-      MONGO_INITDB_ROOT_PASSWORD: library
+      MONGO_INITDB_ROOT_USERNAME: smartdom
+      MONGO_INITDB_ROOT_PASSWORD: smartdom
   postgres-db:
     image: postgres:14.6-alpine
     restart: unless-stopped
@@ -23,9 +23,9 @@ services:
     ports:
       - "5432:5432"
     environment:
-      POSTGRES_PASSWORD: library
-      POSTGRES_USER: library
-      POSTGRES_DB: library
+      POSTGRES_PASSWORD: smartdom
+      POSTGRES_USER: smartdom
+      POSTGRES_DB: smartdom
 #  keycloak:
 #    image: quay.io/keycloak/keycloak:18.0.0
 #    ports:
