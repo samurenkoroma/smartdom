@@ -7,14 +7,13 @@ import (
 )
 
 func (uc *UseCase) CreateContactIntoGroup(groupID uuid.UUID, contacts ...*contact.Contact) ([]*contact.Contact, error) {
-	panic("implement me")
+	return uc.adapterStorage.CreateContactIntoGroup(groupID, contacts...)
 }
 
 func (uc *UseCase) AddContactToGroup(groupID, contactID uuid.UUID) error {
-	// TODO implement me
-	panic("implement me")
+	return uc.adapterStorage.AddContactsToGroup(groupID, contactID)
 }
 
 func (uc *UseCase) DeleteContactFromGroup(groupID, contactID uuid.UUID) error {
-	panic("implement me")
+	return uc.adapterStorage.DeleteContactFromGroup(groupID, contactID)
 }
