@@ -3,6 +3,7 @@ version: "3"
 volumes:
   postgresdata:
   mongodata:
+  clickhousedata:
 
 services:
   mongo-db:
@@ -26,13 +27,42 @@ services:
       POSTGRES_PASSWORD: smartdom
       POSTGRES_USER: smartdom
       POSTGRES_DB: smartdom
-#  keycloak:
-#    image: quay.io/keycloak/keycloak:18.0.0
+  keycloak:
+    image: quay.io/keycloak/keycloak:18.0.0
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      - KEYCLOAK_ADMIN=admin
+      - KEYCLOAK_ADMIN_PASSWORD=admin
+    tty: true
+    command:
+      - start-dev
+
+#  clickhouse-zookeeper:
+#    image: zookeeper
 #    ports:
-#      - "8080:8080"
-#    environment:
-#      - KEYCLOAK_ADMIN=admin
-#      - KEYCLOAK_ADMIN_PASSWORD=admin
-#    tty: true
-#    command:
-#      - start-dev
+#      - "2181:2181"
+#      - "2182:2182"
+#    container_name: clickhouse-zookeeper
+#    hostname: clickhouse-zookeeper
+
+  clickhouse-db:
+    image: clickhouse/clickhouse-server
+    restart: unless-stopped
+    ports:
+      - "18123:8123"
+      - "19000:9000"
+    volumes:
+       - clickhousedata:/var/lib/clickhouse
+    ulimits:
+      nofile:
+        soft: 262144
+        hard: 262144
+    environment:
+      CLICKHOUSE_DB: smartdom
+      CLICKHOUSE_USER: smartdom
+      CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: 1
+      CLICKHOUSE_PASSWORD: smartdom
+#    depends_on:
+#      - clickhouse-zookeeper

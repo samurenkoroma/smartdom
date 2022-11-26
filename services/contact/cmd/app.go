@@ -2,7 +2,15 @@ package main
 
 import (
 	"fmt"
+	"github.com/spf13/viper"
+	"os"
+	"os/signal"
 	"smartdom/pkg/store/postgres"
+	deliveryHttp "smartdom/services/contact/internal/delivery/http"
+	repositoryStorage "smartdom/services/contact/internal/repository/storage/postgres"
+	useCaseContact "smartdom/services/contact/internal/useCase/contact"
+	useCaseGroup "smartdom/services/contact/internal/useCase/group"
+	"syscall"
 )
 
 func main() {
@@ -12,7 +20,25 @@ func main() {
 	}
 	defer conn.Pool.Close()
 
-	fmt.Println(conn.Pool.Stat())
+	var (
+		repoStorage  = repositoryStorage.New(conn.Pool, repositoryStorage.Options{})
+		ucContact    = useCaseContact.New(repoStorage, useCaseContact.Options{})
+		ucGroup      = useCaseGroup.New(repoStorage, useCaseGroup.Options{})
+		listenerHttp = deliveryHttp.New(ucContact, ucGroup, deliveryHttp.Options{})
+	)
 
-	fmt.Println("Hello World!")
+	go func() {
+		fmt.Printf("service started successfully on http port: %d\n", viper.GetUint("HTTP_PORT"))
+		if err = listenerHttp.Run(); err != nil {
+			fmt.Print(err)
+		}
+	}()
+
+	waitSignal()
+}
+
+func waitSignal() {
+	signalCh := make(chan os.Signal, 1)
+	signal.Notify(signalCh, syscall.SIGINT, syscall.SIGTERM)
+	<-signalCh
 }

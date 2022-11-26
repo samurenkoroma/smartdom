@@ -1,8 +1,8 @@
 package queryParameter
 
 import (
-	"architecture_go/pkg/type/pagination"
-	"architecture_go/pkg/type/sort"
+	"smartdom/pkg/type/pagination"
+	"smartdom/pkg/type/sort"
 )
 
 type QueryParameter struct {
