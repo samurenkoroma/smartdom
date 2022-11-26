@@ -24,7 +24,7 @@ func (r *Repository) CreateContactIntoGroup(groupID uuid.UUID, contacts ...*cont
 		err = transaction.Finish(ctx, t, err)
 	}(ctx, tx)
 
-	response, err := r.createContactTx(ctx, tx, contacts...)
+	response, err := r.repoContact.CreateContactTx(ctx, tx, contacts...)
 	if err != nil {
 		return nil, err
 	}

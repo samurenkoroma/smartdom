@@ -19,7 +19,7 @@ import (
 	"smartdom/services/contact/internal/repository/storage/postgres/dao"
 )
 
-var mappingSortGroup = map[columnCode.ColumnCode]string{
+var mappingSort = map[columnCode.ColumnCode]string{
 	"id":          "id",
 	"name":        "name",
 	"description": "description",
@@ -208,7 +208,7 @@ func (r *Repository) listGroupTx(ctx context.Context, tx pgx.Tx, parameter query
 	builder = builder.Where(squirrel.Eq{"is_archived": false})
 
 	if len(parameter.Sorts) > 0 {
-		builder = builder.OrderBy(parameter.Sorts.Parsing(mappingSortGroup)...)
+		builder = builder.OrderBy(parameter.Sorts.Parsing(mappingSort)...)
 	} else {
 		builder = builder.OrderBy("created_at DESC")
 	}
@@ -319,7 +319,7 @@ func (r *Repository) CountGroup() (uint64, error) {
 	return total, nil
 }
 
-func (r *Repository) updateGroupsContactCountByFilters(ctx context.Context, tx pgx.Tx, ID uuid.UUID) error {
+func (r *Repository) UpdateGroupsContactCountByFilters(ctx context.Context, tx pgx.Tx, ID uuid.UUID) error {
 
 	builder := r.genSQL.Select("contact_in_group.group_id").
 		From("slurm.contact_in_group").

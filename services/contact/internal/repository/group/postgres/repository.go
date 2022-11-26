@@ -8,6 +8,8 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/pressly/goose"
+
+	"smartdom/services/contact/internal/repository/contact"
 )
 
 func init() {
@@ -15,8 +17,11 @@ func init() {
 }
 
 type Repository struct {
-	db      *pgxpool.Pool
-	genSQL  squirrel.StatementBuilderType
+	db     *pgxpool.Pool
+	genSQL squirrel.StatementBuilderType
+
+	repoContact contact.Contact
+
 	options Options
 }
 
@@ -25,14 +30,15 @@ type Options struct {
 	DefaultOffset uint64
 }
 
-func New(db *pgxpool.Pool, o Options) (*Repository, error) {
+func New(db *pgxpool.Pool, repoContact contact.Contact, o Options) (*Repository, error) {
 	if err := migrations(db); err != nil {
 		return nil, err
 	}
 
 	var r = &Repository{
-		genSQL: squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar),
-		db:     db,
+		genSQL:      squirrel.StatementBuilder.PlaceholderFormat(squirrel.Dollar),
+		repoContact: repoContact,
+		db:          db,
 	}
 
 	r.SetOptions(o)

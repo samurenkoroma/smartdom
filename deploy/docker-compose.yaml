@@ -4,6 +4,8 @@ volumes:
   postgresdata:
   mongodata:
   clickhousedata:
+  redisdata:
+  rabbitmqdata:
 
 services:
   mongo-db:
@@ -38,7 +40,26 @@ services:
     tty: true
     command:
       - start-dev
-
+  rabbitmq:
+    image: rabbitmq:3-management
+    ports:
+      - "15672:15672"
+      - "5672:5672"
+    volumes:
+      - rabbitmqdata:/var/lib/rabbitmq
+    environment:
+      - RABBITMQ_DEFAULT_USER=guest
+      - RABBITMQ_DEFAULT_PASS=guest
+  redis-db:
+#    image: redis:6.2-alpine
+    image: redis/redis-stack
+#    hostname: redis
+#    command: [ "redis-server", "--appendonly", "yes" ]
+    ports:
+      - "6379:6379"
+      - "8001:8001"
+    volumes:
+      - redisdata:/data
 #  clickhouse-zookeeper:
 #    image: zookeeper
 #    ports:
@@ -46,7 +67,6 @@ services:
 #      - "2182:2182"
 #    container_name: clickhouse-zookeeper
 #    hostname: clickhouse-zookeeper
-
   clickhouse-db:
     image: clickhouse/clickhouse-server
     restart: unless-stopped

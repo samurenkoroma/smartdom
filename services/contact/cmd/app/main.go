@@ -20,8 +20,11 @@ func main() {
 	}
 	defer conn.Pool.Close()
 
+	repoStorage, err := repositoryStorage.New(conn.Pool, repositoryStorage.Options{})
+	if err != nil {
+		panic(err)
+	}
 	var (
-		repoStorage  = repositoryStorage.New(conn.Pool, repositoryStorage.Options{})
 		ucContact    = useCaseContact.New(repoStorage, useCaseContact.Options{})
 		ucGroup      = useCaseGroup.New(repoStorage, useCaseGroup.Options{})
 		listenerHttp = deliveryHttp.New(ucContact, ucGroup, deliveryHttp.Options{})
