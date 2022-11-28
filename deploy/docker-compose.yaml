@@ -6,6 +6,7 @@ volumes:
   clickhousedata:
   redisdata:
   rabbitmqdata:
+  tarantooldata:
 
 services:
   mongo-db:
@@ -86,3 +87,12 @@ services:
       CLICKHOUSE_PASSWORD: smartdom
 #    depends_on:
 #      - clickhouse-zookeeper
+  tarantool-db:
+    image: tarantool/tarantool
+    volumes:
+      - tarantooldata:/opt/tarantool
+    environment:
+      TARANTOOL_USER_NAME: "smartdom"
+      TARANTOOL_USER_PASSWORD: "smartdom"
+    ports:
+      - "3301:3301"

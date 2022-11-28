@@ -1,0 +1,35 @@
+@startuml
+class Book{
+    id: string
+    title: string
+    path: string
+    size: int16
+    authors: Author[]
+    year: int8
+}
+
+class Category {
+    id: string
+    name: string
+    slug: string
+    parent: Category
+}
+
+
+class Author {
+    id: string
+    name: string
+    lastName: string
+}
+class Tag{
+    name: string
+    slug: string
+}
+
+Book --> Author
+Book --> Category
+Book --> Tag
+
+
+
+@enduml
