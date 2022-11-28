@@ -13,10 +13,10 @@
     mode: 0644
   with_items:
     - minidlna.conf
-- name: ensure named is running and enabled
+- name: restart minidlna
   service:
     name: minidlna
     state: restarted
     enabled: yes
 
-    /dev/sda1: LABEL="Seagate Basic" UUID="42E06D90E06D8B4D" TYPE="ntfs" PTTYPE="atari" PARTUUID="ab55c11c-01"
+#    /dev/sda1: LABEL="Seagate Basic" UUID="42E06D90E06D8B4D" TYPE="ntfs" PTTYPE="atari" PARTUUID="ab55c11c-01"
