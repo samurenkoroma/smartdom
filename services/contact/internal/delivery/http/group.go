@@ -7,6 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"smartdom/pkg/tools/converter"
+	"smartdom/pkg/type/context"
 	"smartdom/pkg/type/pagination"
 	"smartdom/pkg/type/query"
 	"smartdom/pkg/type/queryParameter"
@@ -37,6 +38,8 @@ var mappingSortsGroup = query.SortsOptions{
 // @Router /groups/ [post]
 func (d *Delivery) CreateGroup(c *gin.Context) {
 
+	var ctx = context.New(c)
+
 	var group = &jsonGroup.ShortGroup{}
 
 	if err := c.ShouldBindJSON(&group); err != nil {
@@ -54,7 +57,7 @@ func (d *Delivery) CreateGroup(c *gin.Context) {
 		SetError(c, http.StatusBadRequest, err)
 		return
 	}
-	newGroup, err := d.ucGroup.Create(domainGroup.New(
+	newGroup, err := d.ucGroup.Create(ctx, domainGroup.New(
 		groupName,
 		groupDescription,
 	))
@@ -92,6 +95,8 @@ func (d *Delivery) CreateGroup(c *gin.Context) {
 // @Router /groups/{id} [put]
 func (d *Delivery) UpdateGroup(c *gin.Context) {
 
+	var ctx = context.New(c)
+
 	var id jsonGroup.ID
 	if err := c.ShouldBindUri(&id); err != nil {
 		SetError(c, http.StatusBadRequest, err)
@@ -115,7 +120,7 @@ func (d *Delivery) UpdateGroup(c *gin.Context) {
 		return
 	}
 
-	response, err := d.ucGroup.Update(domainGroup.NewWithID(
+	response, err := d.ucGroup.Update(ctx, domainGroup.NewWithID(
 		converter.StringToUUID(id.Value),
 		time.Now().UTC(),
 		time.Now().UTC(),
@@ -144,13 +149,15 @@ func (d *Delivery) UpdateGroup(c *gin.Context) {
 // @Router /groups/{id} [delete]
 func (d *Delivery) DeleteGroup(c *gin.Context) {
 
+	var ctx = context.New(c)
+
 	var id jsonGroup.ID
 	if err := c.ShouldBindUri(&id); err != nil {
 		SetError(c, http.StatusBadRequest, err)
 		return
 	}
 
-	if err := d.ucGroup.Delete(converter.StringToUUID(id.Value)); err != nil {
+	if err := d.ucGroup.Delete(ctx, converter.StringToUUID(id.Value)); err != nil {
 		SetError(c, http.StatusInternalServerError, err)
 		return
 	}
@@ -173,6 +180,8 @@ func (d *Delivery) DeleteGroup(c *gin.Context) {
 // @Router /groups/ [get]
 func (d *Delivery) ListGroup(c *gin.Context) {
 
+	var ctx = context.New(c)
+
 	params, err := query.ParseQuery(c, query.Options{
 		Sorts: mappingSortsGroup,
 	})
@@ -182,7 +191,7 @@ func (d *Delivery) ListGroup(c *gin.Context) {
 		return
 	}
 
-	groups, err := d.ucGroup.List(queryParameter.QueryParameter{
+	groups, err := d.ucGroup.List(ctx, queryParameter.QueryParameter{
 		Sorts: params.Sorts,
 		Pagination: pagination.Pagination{
 			Limit:  params.Limit,
@@ -194,7 +203,7 @@ func (d *Delivery) ListGroup(c *gin.Context) {
 		return
 	}
 
-	count, err := d.ucContact.Count()
+	count, err := d.ucContact.Count(ctx)
 	if err != nil {
 		SetError(c, http.StatusInternalServerError, err)
 		return
@@ -228,13 +237,15 @@ func (d *Delivery) ListGroup(c *gin.Context) {
 // @Router /groups/{id} [get]
 func (d *Delivery) ReadGroupByID(c *gin.Context) {
 
+	var ctx = context.New(c)
+
 	var id jsonGroup.ID
 	if err := c.ShouldBindUri(&id); err != nil {
 		SetError(c, http.StatusBadRequest, err)
 		return
 	}
 
-	response, err := d.ucGroup.ReadByID(converter.StringToUUID(id.Value))
+	response, err := d.ucGroup.ReadByID(ctx, converter.StringToUUID(id.Value))
 	if err != nil {
 		SetError(c, http.StatusInternalServerError, err)
 		return

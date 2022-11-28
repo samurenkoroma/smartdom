@@ -1,7 +1,6 @@
 package postgres
 
 import (
-	"context"
 	"database/sql"
 	"errors"
 	"time"
@@ -14,18 +13,24 @@ import (
 	"smartdom/pkg/tools/converter"
 	"smartdom/pkg/tools/transaction"
 	"smartdom/pkg/type/columnCode"
+	"smartdom/pkg/type/context"
 	"smartdom/pkg/type/queryParameter"
 	"smartdom/services/contact/internal/domain/group"
 	"smartdom/services/contact/internal/repository/storage/postgres/dao"
 )
 
 var mappingSortGroup = map[columnCode.ColumnCode]string{
-	"id":          "id",
-	"name":        "name",
-	"description": "description",
+	"id":           "id",
+	"name":         "name",
+	"description":  "description",
+	"contactCount": "contact_count",
 }
 
-func (r *Repository) CreateGroup(group *group.Group) (*group.Group, error) {
+func (r *Repository) CreateGroup(c context.Context, group *group.Group) (*group.Group, error) {
+
+	ctx := c.CopyWithTimeout(r.options.Timeout)
+	defer ctx.Cancel()
+
 	query, args, err := r.genSQL.Insert("slurm.group").
 		Columns(
 			"id",
@@ -44,7 +49,6 @@ func (r *Repository) CreateGroup(group *group.Group) (*group.Group, error) {
 	if err != nil {
 		return nil, err
 	}
-	var ctx = context.Background()
 
 	if _, err = r.db.Exec(ctx, query, args...); err != nil {
 		return nil, err
@@ -52,8 +56,10 @@ func (r *Repository) CreateGroup(group *group.Group) (*group.Group, error) {
 	return group, nil
 }
 
-func (r *Repository) UpdateGroup(ID uuid.UUID, updateFn func(group *group.Group) (*group.Group, error)) (*group.Group, error) {
-	var ctx = context.Background()
+func (r *Repository) UpdateGroup(c context.Context, ID uuid.UUID, updateFn func(group *group.Group) (*group.Group, error)) (*group.Group, error) {
+
+	ctx := c.CopyWithTimeout(r.options.Timeout)
+	defer ctx.Cancel()
 
 	tx, err := r.db.Begin(ctx)
 	if err != nil {
@@ -108,8 +114,10 @@ func (r *Repository) UpdateGroup(ID uuid.UUID, updateFn func(group *group.Group)
 	return groupForUpdate, nil
 }
 
-func (r *Repository) DeleteGroup(ID uuid.UUID) error {
-	var ctx = context.Background()
+func (r *Repository) DeleteGroup(c context.Context, ID uuid.UUID) error {
+
+	ctx := c.CopyWithTimeout(r.options.Timeout)
+	defer ctx.Cancel()
 
 	tx, err := r.db.Begin(ctx)
 	if err != nil {
@@ -171,8 +179,10 @@ func (r *Repository) clearGroupTx(ctx context.Context, tx pgx.Tx, groupID uuid.U
 	return nil
 }
 
-func (r *Repository) ListGroup(parameter queryParameter.QueryParameter) ([]*group.Group, error) {
-	var ctx = context.Background()
+func (r *Repository) ListGroup(c context.Context, parameter queryParameter.QueryParameter) ([]*group.Group, error) {
+
+	ctx := c.CopyWithTimeout(r.options.Timeout)
+	defer ctx.Cancel()
 
 	tx, err := r.db.Begin(ctx)
 	if err != nil {
@@ -241,8 +251,10 @@ func (r *Repository) listGroupTx(ctx context.Context, tx pgx.Tx, parameter query
 	return result, nil
 }
 
-func (r *Repository) ReadGroupByID(ID uuid.UUID) (*group.Group, error) {
-	var ctx = context.Background()
+func (r *Repository) ReadGroupByID(c context.Context, ID uuid.UUID) (*group.Group, error) {
+
+	ctx := c.CopyWithTimeout(r.options.Timeout)
+	defer ctx.Cancel()
 
 	tx, err := r.db.Begin(ctx)
 	if err != nil {
@@ -295,9 +307,7 @@ func (r *Repository) oneGroupTx(ctx context.Context, tx pgx.Tx, ID uuid.UUID) (r
 
 }
 
-func (r *Repository) CountGroup() (uint64, error) {
-	var ctx = context.Background()
-
+func (r *Repository) CountGroup(ctx context.Context) (uint64, error) {
 	var builder = r.genSQL.Select(
 		"COUNT(id)",
 	).From("slurm.group")

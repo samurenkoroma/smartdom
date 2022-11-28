@@ -8,6 +8,7 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"smartdom/pkg/tools/converter"
+	"smartdom/pkg/type/context"
 	"smartdom/pkg/type/pagination"
 	"smartdom/pkg/type/phoneNumber"
 	"smartdom/pkg/type/query"
@@ -44,6 +45,8 @@ var mappingSortsContact = query.SortsOptions{
 // @Failure 404 	    {object} 	ErrorResponse			"404 Not Found"
 // @Router /contacts/ [post]
 func (d *Delivery) CreateContact(c *gin.Context) {
+
+	var ctx = context.New(c)
 
 	contact := jsonContact.ShortContact{}
 	if err := c.ShouldBindJSON(&contact); err != nil {
@@ -89,7 +92,7 @@ func (d *Delivery) CreateContact(c *gin.Context) {
 		return
 	}
 
-	response, err := d.ucContact.Create(dContact)
+	response, err := d.ucContact.Create(ctx, dContact)
 	if err != nil {
 		SetError(c, http.StatusInternalServerError, err)
 		return
@@ -116,6 +119,8 @@ func (d *Delivery) CreateContact(c *gin.Context) {
 // @Failure 404 	    {object} 	ErrorResponse			  		  "404 Not Found"
 // @Router /contacts/{id} [put]
 func (d *Delivery) UpdateContact(c *gin.Context) {
+
+	var ctx = context.New(c)
 
 	var id jsonContact.ID
 	if err := c.ShouldBindUri(&id); err != nil {
@@ -166,7 +171,7 @@ func (d *Delivery) UpdateContact(c *gin.Context) {
 		contact.Gender,
 	)
 
-	response, err := d.ucContact.Update(*dContact)
+	response, err := d.ucContact.Update(ctx, *dContact)
 	if err != nil {
 		SetError(c, http.StatusInternalServerError, err)
 		return
@@ -189,13 +194,15 @@ func (d *Delivery) UpdateContact(c *gin.Context) {
 // @Router /contacts/{id} [delete]
 func (d *Delivery) DeleteContact(c *gin.Context) {
 
+	var ctx = context.New(c)
+
 	var id jsonContact.ID
 	if err := c.ShouldBindUri(&id); err != nil {
 		SetError(c, http.StatusBadRequest, err)
 		return
 	}
 
-	if err := d.ucContact.Delete(converter.StringToUUID(id.Value)); err != nil {
+	if err := d.ucContact.Delete(ctx, converter.StringToUUID(id.Value)); err != nil {
 		SetError(c, http.StatusInternalServerError, err)
 		return
 	}
@@ -218,6 +225,8 @@ func (d *Delivery) DeleteContact(c *gin.Context) {
 // @Router /contacts/ [get]
 func (d *Delivery) ListContact(c *gin.Context) {
 
+	var ctx = context.New(c)
+
 	params, err := query.ParseQuery(c, query.Options{
 		Sorts: mappingSortsContact,
 	})
@@ -227,7 +236,7 @@ func (d *Delivery) ListContact(c *gin.Context) {
 		return
 	}
 
-	contacts, err := d.ucContact.List(queryParameter.QueryParameter{
+	contacts, err := d.ucContact.List(ctx, queryParameter.QueryParameter{
 		Sorts: params.Sorts,
 		Pagination: pagination.Pagination{
 			Limit:  params.Limit,
@@ -239,7 +248,7 @@ func (d *Delivery) ListContact(c *gin.Context) {
 		return
 	}
 
-	count, err := d.ucContact.Count()
+	count, err := d.ucContact.Count(ctx)
 	if err != nil {
 		SetError(c, http.StatusInternalServerError, err)
 		return
@@ -272,13 +281,15 @@ func (d *Delivery) ListContact(c *gin.Context) {
 // @Router /contacts/{id} [get]
 func (d *Delivery) ReadContactByID(c *gin.Context) {
 
+	var ctx = context.New(c)
+
 	var id jsonContact.ID
 	if err := c.ShouldBindUri(&id); err != nil {
 		SetError(c, http.StatusBadRequest, err)
 		return
 	}
 
-	response, err := d.ucContact.ReadByID(converter.StringToUUID(id.Value))
+	response, err := d.ucContact.ReadByID(ctx, converter.StringToUUID(id.Value))
 	if err != nil {
 		SetError(c, http.StatusInternalServerError, err)
 		return

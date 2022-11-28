@@ -7,6 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"smartdom/pkg/tools/converter"
+	"smartdom/pkg/type/context"
 	"smartdom/pkg/type/phoneNumber"
 	jsonContact "smartdom/services/contact/internal/delivery/http/contact"
 	jsonGroup "smartdom/services/contact/internal/delivery/http/group"
@@ -32,6 +33,8 @@ import (
 // @Failure 404 	    {object} 	ErrorResponse						"404 Not Found"
 // @Router /groups/{id}/contacts/ [post]
 func (d *Delivery) CreateContactIntoGroup(c *gin.Context) {
+
+	var ctx = context.New(c)
 
 	var id jsonGroup.ID
 	if err := c.ShouldBindUri(&id); err != nil {
@@ -83,7 +86,7 @@ func (d *Delivery) CreateContactIntoGroup(c *gin.Context) {
 		return
 	}
 
-	contacts, err := d.ucGroup.CreateContactIntoGroup(converter.StringToUUID(id.Value), dContact)
+	contacts, err := d.ucGroup.CreateContactIntoGroup(ctx, converter.StringToUUID(id.Value), dContact)
 	if err != nil {
 		SetError(c, http.StatusInternalServerError, err)
 		return
@@ -113,6 +116,8 @@ func (d *Delivery) CreateContactIntoGroup(c *gin.Context) {
 // @Router /groups/{id}/contacts/{contactId} [post]
 func (d *Delivery) AddContactToGroup(c *gin.Context) {
 
+	var ctx = context.New(c)
+
 	var id jsonGroup.ID
 	if err := c.ShouldBindUri(&id); err != nil {
 		SetError(c, http.StatusBadRequest, err)
@@ -125,7 +130,7 @@ func (d *Delivery) AddContactToGroup(c *gin.Context) {
 		return
 	}
 
-	if err := d.ucGroup.AddContactToGroup(converter.StringToUUID(id.Value), converter.StringToUUID(contactID.Value)); err != nil {
+	if err := d.ucGroup.AddContactToGroup(ctx, converter.StringToUUID(id.Value), converter.StringToUUID(contactID.Value)); err != nil {
 		SetError(c, http.StatusInternalServerError, err)
 		return
 	}
@@ -149,6 +154,8 @@ func (d *Delivery) AddContactToGroup(c *gin.Context) {
 // @Router /groups/{id}/contacts/{contactId} [delete]
 func (d *Delivery) DeleteContactFromGroup(c *gin.Context) {
 
+	var ctx = context.New(c)
+
 	var id jsonGroup.ID
 	if err := c.ShouldBindUri(&id); err != nil {
 		SetError(c, http.StatusBadRequest, err)
@@ -161,7 +168,7 @@ func (d *Delivery) DeleteContactFromGroup(c *gin.Context) {
 		return
 	}
 
-	if err := d.ucGroup.DeleteContactFromGroup(converter.StringToUUID(id.Value), converter.StringToUUID(contactID.Value)); err != nil {
+	if err := d.ucGroup.DeleteContactFromGroup(ctx, converter.StringToUUID(id.Value), converter.StringToUUID(contactID.Value)); err != nil {
 		SetError(c, http.StatusInternalServerError, err)
 		return
 	}
