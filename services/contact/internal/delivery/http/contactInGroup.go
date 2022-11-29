@@ -1,7 +1,6 @@
 package http
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -44,7 +43,7 @@ func (d *Delivery) CreateContactIntoGroup(c *gin.Context) {
 
 	contact := jsonContact.ShortContact{}
 	if err := c.ShouldBindJSON(&contact); err != nil {
-		SetError(c, http.StatusBadRequest, fmt.Errorf("payload is not correct, Error: %w", err))
+		SetError(c, http.StatusBadRequest, err)
 		return
 	}
 

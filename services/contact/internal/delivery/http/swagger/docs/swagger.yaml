@@ -227,7 +227,7 @@ info:
   title: slurm contact service on clean architecture
   version: "1.0"
 paths:
-  /contacts:
+  /contacts/:
     get:
       consumes:
       - application/json

@@ -1,14 +1,16 @@
 package http
 
 import (
-	"fmt"
+	"errors"
 	"net/http"
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"go.uber.org/zap"
 
 	"smartdom/pkg/tools/converter"
 	"smartdom/pkg/type/context"
+	"smartdom/pkg/type/logger"
 	"smartdom/pkg/type/pagination"
 	"smartdom/pkg/type/phoneNumber"
 	"smartdom/pkg/type/query"
@@ -19,6 +21,7 @@ import (
 	"smartdom/services/contact/internal/domain/contact/name"
 	"smartdom/services/contact/internal/domain/contact/patronymic"
 	"smartdom/services/contact/internal/domain/contact/surname"
+	"smartdom/services/contact/internal/useCase"
 )
 
 var mappingSortsContact = query.SortsOptions{
@@ -50,7 +53,7 @@ func (d *Delivery) CreateContact(c *gin.Context) {
 
 	contact := jsonContact.ShortContact{}
 	if err := c.ShouldBindJSON(&contact); err != nil {
-		SetError(c, http.StatusBadRequest, fmt.Errorf("payload is not correct, Error: %w", err))
+		SetError(c, http.StatusBadRequest, err)
 		return
 	}
 
@@ -94,10 +97,11 @@ func (d *Delivery) CreateContact(c *gin.Context) {
 
 	response, err := d.ucContact.Create(ctx, dContact)
 	if err != nil {
+
 		SetError(c, http.StatusInternalServerError, err)
 		return
 	}
-
+	logger.InfoWithContext(ctx, "test log", zap.Any("Test", "Test"))
 	if len(response) > 0 {
 		c.JSON(http.StatusCreated, jsonContact.ToContactResponse(response[0]))
 	} else {
@@ -173,6 +177,11 @@ func (d *Delivery) UpdateContact(c *gin.Context) {
 
 	response, err := d.ucContact.Update(ctx, *dContact)
 	if err != nil {
+		if errors.Is(err, useCase.ErrContactNotFound) {
+			SetError(c, http.StatusNotFound, err)
+			return
+		}
+
 		SetError(c, http.StatusInternalServerError, err)
 		return
 	}
@@ -226,7 +235,6 @@ func (d *Delivery) DeleteContact(c *gin.Context) {
 func (d *Delivery) ListContact(c *gin.Context) {
 
 	var ctx = context.New(c)
-
 	params, err := query.ParseQuery(c, query.Options{
 		Sorts: mappingSortsContact,
 	})
@@ -291,6 +299,11 @@ func (d *Delivery) ReadContactByID(c *gin.Context) {
 
 	response, err := d.ucContact.ReadByID(ctx, converter.StringToUUID(id.Value))
 	if err != nil {
+		if errors.Is(err, useCase.ErrContactNotFound) {
+			SetError(c, http.StatusNotFound, err)
+			return
+		}
+
 		SetError(c, http.StatusInternalServerError, err)
 		return
 	}

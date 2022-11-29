@@ -1,6 +1,7 @@
 package http
 
 import (
+	"errors"
 	"net/http"
 	"time"
 
@@ -15,6 +16,7 @@ import (
 	domainGroup "smartdom/services/contact/internal/domain/group"
 	"smartdom/services/contact/internal/domain/group/description"
 	"smartdom/services/contact/internal/domain/group/name"
+	"smartdom/services/contact/internal/useCase"
 )
 
 var mappingSortsGroup = query.SortsOptions{
@@ -129,6 +131,11 @@ func (d *Delivery) UpdateGroup(c *gin.Context) {
 		0,
 	))
 	if err != nil {
+		if errors.Is(err, useCase.ErrGroupNotFound) {
+			SetError(c, http.StatusNotFound, err)
+			return
+		}
+
 		SetError(c, http.StatusInternalServerError, err)
 		return
 	}
@@ -247,6 +254,11 @@ func (d *Delivery) ReadGroupByID(c *gin.Context) {
 
 	response, err := d.ucGroup.ReadByID(ctx, converter.StringToUUID(id.Value))
 	if err != nil {
+		if errors.Is(err, useCase.ErrGroupNotFound) {
+			SetError(c, http.StatusNotFound, err)
+			return
+		}
+
 		SetError(c, http.StatusInternalServerError, err)
 		return
 	}

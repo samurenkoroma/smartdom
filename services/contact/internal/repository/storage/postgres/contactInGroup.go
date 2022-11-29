@@ -9,6 +9,7 @@ import (
 
 	"smartdom/pkg/tools/transaction"
 	"smartdom/pkg/type/context"
+	log "smartdom/pkg/type/logger"
 	"smartdom/services/contact/internal/domain/contact"
 	"smartdom/services/contact/internal/repository/storage/postgres/dao"
 )
@@ -20,7 +21,7 @@ func (r *Repository) CreateContactIntoGroup(c context.Context, groupID uuid.UUID
 
 	tx, err := r.db.Begin(ctx)
 	if err != nil {
-		return nil, err
+		return nil, log.ErrorWithContext(ctx, err)
 	}
 	defer func(ctx context.Context, t pgx.Tx) {
 		err = transaction.Finish(ctx, t, err)
@@ -49,7 +50,7 @@ func (r *Repository) DeleteContactFromGroup(c context.Context, groupID, contactI
 
 	tx, err := r.db.Begin(ctx)
 	if err != nil {
-		return err
+		return log.ErrorWithContext(ctx, err)
 	}
 	defer func(ctx context.Context, t pgx.Tx) {
 		err = transaction.Finish(ctx, t, err)
@@ -60,12 +61,11 @@ func (r *Repository) DeleteContactFromGroup(c context.Context, groupID, contactI
 		Where(squirrel.Eq{"contact_id": contactID, "group_id": groupID}).
 		ToSql()
 	if err != nil {
-		return err
+		return log.ErrorWithContext(ctx, err)
 	}
 
-	_, err = tx.Exec(ctx, query, args...)
-	if err != nil {
-		return err
+	if _, err = tx.Exec(ctx, query, args...); err != nil {
+		return log.ErrorWithContext(ctx, err)
 	}
 
 	if err = r.updateGroupContactCount(ctx, tx, groupID); err != nil {
@@ -82,7 +82,7 @@ func (r *Repository) AddContactsToGroup(c context.Context, groupID uuid.UUID, co
 
 	tx, err := r.db.Begin(ctx)
 	if err != nil {
-		return err
+		return log.ErrorWithContext(ctx, err)
 	}
 	defer func(ctx context.Context, t pgx.Tx) {
 		err = transaction.Finish(ctx, t, err)
@@ -132,7 +132,7 @@ func (r *Repository) fillGroupTx(ctx context.Context, tx pgx.Tx, groupID uuid.UU
 		pgx.CopyFromRows(rows),
 	)
 	if err != nil {
-		return err
+		return log.ErrorWithContext(ctx, err)
 	}
 
 	if err = r.updateGroupContactCount(ctx, tx, groupID); err != nil {
@@ -159,19 +159,19 @@ func (r *Repository) checkExistContactInGroup(ctx context.Context, tx pgx.Tx, gr
 		Where(squirrel.Eq{"contact_id": contactIDs, "group_id": groupID}).ToSql()
 
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, log.ErrorWithContext(ctx, err)
 	}
 
 	rows, err := tx.Query(ctx, query, args...)
 	if err != nil {
-		return nil, nil, err
+		return nil, nil, log.ErrorWithContext(ctx, err)
 	}
 
 	for rows.Next() {
 		var contactID = uuid.UUID{}
 
 		if err = rows.Scan(&contactID); err != nil {
-			return nil, nil, err
+			return nil, nil, log.ErrorWithContext(ctx, err)
 		}
 
 		listExist = append(listExist, contactID)
@@ -185,7 +185,7 @@ func (r *Repository) checkExistContactInGroup(ctx context.Context, tx pgx.Tx, gr
 	}
 
 	if err = rows.Err(); err != nil {
-		return nil, nil, err
+		return nil, nil, log.ErrorWithContext(ctx, err)
 	}
 
 	return listExist, mapExist, nil

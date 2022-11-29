@@ -22,7 +22,7 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/contacts": {
+        "/contacts/": {
             "get": {
                 "description": "Метод позволяет получить список контактов.",
                 "consumes": [

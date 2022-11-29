@@ -2,7 +2,6 @@ package postgres
 
 import (
 	"database/sql"
-	"errors"
 	"time"
 
 	"github.com/Masterminds/squirrel"
@@ -14,9 +13,11 @@ import (
 	"smartdom/pkg/tools/transaction"
 	"smartdom/pkg/type/columnCode"
 	"smartdom/pkg/type/context"
+	log "smartdom/pkg/type/logger"
 	"smartdom/pkg/type/queryParameter"
 	"smartdom/services/contact/internal/domain/group"
 	"smartdom/services/contact/internal/repository/storage/postgres/dao"
+	"smartdom/services/contact/internal/useCase"
 )
 
 var mappingSortGroup = map[columnCode.ColumnCode]string{
@@ -47,11 +48,11 @@ func (r *Repository) CreateGroup(c context.Context, group *group.Group) (*group.
 			group.ModifiedAt()).
 		ToSql()
 	if err != nil {
-		return nil, err
+		return nil, log.ErrorWithContext(ctx, err)
 	}
 
 	if _, err = r.db.Exec(ctx, query, args...); err != nil {
-		return nil, err
+		return nil, log.ErrorWithContext(ctx, err)
 	}
 	return group, nil
 }
@@ -63,7 +64,7 @@ func (r *Repository) UpdateGroup(c context.Context, ID uuid.UUID, updateFn func(
 
 	tx, err := r.db.Begin(ctx)
 	if err != nil {
-		return nil, err
+		return nil, log.ErrorWithContext(ctx, err)
 	}
 
 	defer func(ctx context.Context, t pgx.Tx) {
@@ -98,17 +99,17 @@ func (r *Repository) UpdateGroup(c context.Context, ID uuid.UUID, updateFn func(
 		).
 		ToSql()
 	if err != nil {
-		return nil, err
+		return nil, log.ErrorWithContext(ctx, err)
 	}
 
 	rows, err := tx.Query(ctx, query, args...)
 	if err != nil {
-		return nil, err
+		return nil, log.ErrorWithContext(ctx, err)
 	}
 
 	var daoGroup []*dao.Group
 	if err = pgxscan.ScanAll(&daoGroup, rows); err != nil {
-		return nil, err
+		return nil, log.ErrorWithContext(ctx, err)
 	}
 
 	return groupForUpdate, nil
@@ -121,7 +122,7 @@ func (r *Repository) DeleteGroup(c context.Context, ID uuid.UUID) error {
 
 	tx, err := r.db.Begin(ctx)
 	if err != nil {
-		return err
+		return log.ErrorWithContext(ctx, err)
 	}
 
 	defer func(ctx context.Context, t pgx.Tx) {
@@ -145,11 +146,11 @@ func (r *Repository) deleteGroupTx(ctx context.Context, tx pgx.Tx, ID uuid.UUID)
 		}).ToSql()
 
 	if err != nil {
-		return err
+		return log.ErrorWithContext(ctx, err)
 	}
 
-	if _, errEx := tx.Exec(ctx, query, args...); errEx != nil {
-		return err
+	if _, err = tx.Exec(ctx, query, args...); err != nil {
+		return log.ErrorWithContext(ctx, err)
 	}
 
 	if err = r.clearGroupTx(ctx, tx, ID); err != nil {
@@ -165,11 +166,11 @@ func (r *Repository) clearGroupTx(ctx context.Context, tx pgx.Tx, groupID uuid.U
 		Where(squirrel.Eq{"group_id": groupID}).
 		ToSql()
 	if err != nil {
-		return err
+		return log.ErrorWithContext(ctx, err)
 	}
 
 	if _, err = tx.Exec(ctx, query, args...); err != nil {
-		return err
+		return log.ErrorWithContext(ctx, err)
 	}
 
 	if err = r.updateGroupContactCount(ctx, tx, groupID); err != nil {
@@ -186,7 +187,7 @@ func (r *Repository) ListGroup(c context.Context, parameter queryParameter.Query
 
 	tx, err := r.db.Begin(ctx)
 	if err != nil {
-		return nil, err
+		return nil, log.ErrorWithContext(ctx, err)
 	}
 
 	defer func(ctx context.Context, t pgx.Tx) {
@@ -233,18 +234,18 @@ func (r *Repository) listGroupTx(ctx context.Context, tx pgx.Tx, parameter query
 	query, args, err := builder.ToSql()
 	rows, err := tx.Query(ctx, query, args...)
 	if err != nil {
-		return nil, err
+		return nil, log.ErrorWithContext(ctx, err)
 	}
 
 	var groups []*dao.Group
 	if err = pgxscan.ScanAll(&groups, rows); err != nil {
-		return nil, err
+		return nil, log.ErrorWithContext(ctx, err)
 	}
 
 	for _, g := range groups {
 		domainGroup, err := g.ToDomainGroup()
 		if err != nil {
-			return nil, err
+			return nil, log.ErrorWithContext(ctx, err)
 		}
 		result = append(result, domainGroup)
 	}
@@ -258,7 +259,7 @@ func (r *Repository) ReadGroupByID(c context.Context, ID uuid.UUID) (*group.Grou
 
 	tx, err := r.db.Begin(ctx)
 	if err != nil {
-		return nil, err
+		return nil, log.ErrorWithContext(ctx, err)
 	}
 
 	defer func(ctx context.Context, t pgx.Tx) {
@@ -291,16 +292,16 @@ func (r *Repository) oneGroupTx(ctx context.Context, tx pgx.Tx, ID uuid.UUID) (r
 	query, args, err := builder.ToSql()
 	rows, err := tx.Query(ctx, query, args...)
 	if err != nil {
-		return nil, err
+		return nil, log.ErrorWithContext(ctx, err)
 	}
 
 	var daoGroup []*dao.Group
 	if err = pgxscan.ScanAll(&daoGroup, rows); err != nil {
-		return nil, err
+		return nil, log.ErrorWithContext(ctx, err)
 	}
 
 	if len(daoGroup) == 0 {
-		return nil, errors.New("group not found")
+		return nil, useCase.ErrGroupNotFound
 	}
 
 	return daoGroup[0].ToDomainGroup()
@@ -316,14 +317,14 @@ func (r *Repository) CountGroup(ctx context.Context) (uint64, error) {
 
 	query, args, err := builder.ToSql()
 	if err != nil {
-		return 0, err
+		return 0, log.ErrorWithContext(ctx, err)
 	}
 
 	row := r.db.QueryRow(ctx, query, args...)
 	var total uint64
 
 	if err = row.Scan(&total); err != nil {
-		return 0, err
+		return 0, log.ErrorWithContext(ctx, err)
 	}
 
 	return total, nil
@@ -340,18 +341,18 @@ func (r *Repository) updateGroupsContactCountByFilters(ctx context.Context, tx p
 
 	query, args, err := builder.ToSql()
 	if err != nil {
-		return err
+		return log.ErrorWithContext(ctx, err)
 	}
 
 	rows, err := tx.Query(ctx, query, args...)
 	if err != nil {
-		return err
+		return log.ErrorWithContext(ctx, err)
 	}
 	var groupIDs []uuid.UUID
 	for rows.Next() {
 		var groupID sql.NullString
 		if err = rows.Scan(&groupID); err != nil {
-			return err
+			return log.ErrorWithContext(ctx, err)
 		}
 		groupIDs = append(groupIDs, converter.StringToUUID(groupID.String))
 	}
@@ -363,7 +364,7 @@ func (r *Repository) updateGroupsContactCountByFilters(ctx context.Context, tx p
 	}
 
 	if err = rows.Err(); err != nil {
-		return err
+		return log.ErrorWithContext(ctx, err)
 	}
 
 	return nil
@@ -381,13 +382,13 @@ func (r *Repository) updateGroupContactCount(ctx context.Context, tx pgx.Tx, gro
 		Where(squirrel.Eq{"id": groupID}).
 		ToSql()
 	if err != nil {
-		return err
+		return log.ErrorWithContext(ctx, err)
 	}
 
 	var args = []interface{}{groupID, false}
 
 	if _, err = tx.Exec(ctx, query, args...); err != nil {
-		return err
+		return log.ErrorWithContext(ctx, err)
 	}
 	return nil
 }

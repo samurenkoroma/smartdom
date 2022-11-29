@@ -3,12 +3,13 @@ package http
 import (
 	"strings"
 
+	"github.com/gin-contrib/zap"
 	"github.com/gin-gonic/gin"
 	"github.com/spf13/viper"
-
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
 
+	"smartdom/pkg/type/logger"
 	docs "smartdom/services/contact/internal/delivery/http/swagger/docs"
 )
 
@@ -26,6 +27,12 @@ func (d *Delivery) initRouter() *gin.Engine {
 	}
 
 	var router = gin.New()
+
+	router.Use(Tracer())
+
+	// Logs all panic to error log
+	//   - stack means whether output the stack info.
+	router.Use(ginzap.RecoveryWithZap(logger.GetLogger(), true))
 
 	d.routerDocs(router.Group("/docs"))
 

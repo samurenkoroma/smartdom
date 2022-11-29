@@ -1,6 +1,9 @@
 package group
 
 import (
+	"go.uber.org/zap"
+
+	log "smartdom/pkg/type/logger"
 	"smartdom/services/contact/internal/useCase/adapters/storage"
 )
 
@@ -22,5 +25,6 @@ func New(storage storage.Group, options Options) *UseCase {
 func (uc *UseCase) SetOptions(options Options) {
 	if uc.options != options {
 		uc.options = options
+		log.Info("set new options", zap.Any("options", uc.options))
 	}
 }

@@ -1,20 +1,21 @@
 package postgres
 
 import (
-	"errors"
+	"github.com/opentracing/opentracing-go"
 	"time"
 
 	"github.com/Masterminds/squirrel"
 	"github.com/georgysavva/scany/pgxscan"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v4"
-
 	"smartdom/pkg/tools/transaction"
 	"smartdom/pkg/type/columnCode"
 	"smartdom/pkg/type/context"
+	log "smartdom/pkg/type/logger"
 	"smartdom/pkg/type/queryParameter"
 	"smartdom/services/contact/internal/domain/contact"
 	"smartdom/services/contact/internal/repository/storage/postgres/dao"
+	"smartdom/services/contact/internal/useCase"
 )
 
 var mappingSortContact = map[columnCode.ColumnCode]string{
@@ -36,7 +37,7 @@ func (r *Repository) CreateContact(c context.Context, contacts ...*contact.Conta
 
 	tx, err := r.db.Begin(ctx)
 	if err != nil {
-		return nil, err
+		return nil, log.ErrorWithContext(ctx, err)
 	}
 
 	defer func(ctx context.Context, t pgx.Tx) {
@@ -62,7 +63,7 @@ func (r *Repository) createContactTx(ctx context.Context, tx pgx.Tx, contacts ..
 		dao.CreateColumnContact,
 		r.toCopyFromSource(contacts...))
 	if err != nil {
-		return nil, err
+		return nil, log.ErrorWithContext(ctx, err)
 	}
 
 	return contacts, nil
@@ -75,7 +76,7 @@ func (r *Repository) UpdateContact(c context.Context, ID uuid.UUID, updateFn fun
 
 	tx, err := r.db.Begin(ctx)
 	if err != nil {
-		return nil, err
+		return nil, log.ErrorWithContext(ctx, err)
 	}
 
 	defer func(ctx context.Context, t pgx.Tx) {
@@ -126,17 +127,17 @@ func (r *Repository) updateContactTx(ctx context.Context, tx pgx.Tx, in *contact
 
 	query, args, err := builder.ToSql()
 	if err != nil {
-		return nil, err
+		return nil, log.ErrorWithContext(ctx, err)
 	}
 
 	rows, err := tx.Query(ctx, query, args...)
 	if err != nil {
-		return nil, err
+		return nil, log.ErrorWithContext(ctx, err)
 	}
 
 	var daoContacts []*dao.Contact
 	if err = pgxscan.ScanAll(&daoContacts, rows); err != nil {
-		return nil, err
+		return nil, log.ErrorWithContext(ctx, err)
 	}
 
 	return r.toDomainContact(daoContacts[0])
@@ -149,7 +150,7 @@ func (r *Repository) DeleteContact(c context.Context, ID uuid.UUID) error {
 
 	tx, err := r.db.Begin(ctx)
 	if err != nil {
-		return err
+		return log.ErrorWithContext(ctx, err)
 	}
 
 	defer func(ctx context.Context, t pgx.Tx) {
@@ -171,17 +172,17 @@ func (r *Repository) deleteContactTx(ctx context.Context, tx pgx.Tx, ID uuid.UUI
 
 	query, args, err := builder.ToSql()
 	if err != nil {
-		return err
+		return log.ErrorWithContext(ctx, err)
 	}
 
 	rows, err := tx.Query(ctx, query, args...)
 	if err != nil {
-		return err
+		return log.ErrorWithContext(ctx, err)
 	}
 
 	var daoContacts []*dao.Contact
 	if err = pgxscan.ScanAll(&daoContacts, rows); err != nil {
-		return err
+		return log.ErrorWithContext(ctx, err)
 	}
 
 	if err = r.updateGroupsContactCountByFilters(ctx, tx, ID); err != nil {
@@ -196,9 +197,13 @@ func (r *Repository) ListContact(c context.Context, parameter queryParameter.Que
 	ctx := c.CopyWithTimeout(r.options.Timeout)
 	defer ctx.Cancel()
 
+	span, tmp := opentracing.StartSpanFromContext(c, "ListContact")
+	defer span.Finish()
+	ctx = context.New(tmp)
+
 	tx, err := r.db.Begin(ctx)
 	if err != nil {
-		return nil, err
+		return nil, log.ErrorWithContext(ctx, err)
 	}
 
 	defer func(ctx context.Context, t pgx.Tx) {
@@ -248,17 +253,17 @@ func (r *Repository) listContactTx(ctx context.Context, tx pgx.Tx, parameter que
 
 	query, args, err := builder.ToSql()
 	if err != nil {
-		return nil, err
+		return nil, log.ErrorWithContext(ctx, err)
 	}
 
 	rows, err := tx.Query(ctx, query, args...)
 	if err != nil {
-		return nil, err
+		return nil, log.ErrorWithContext(ctx, err)
 	}
 
 	var daoContacts []*dao.Contact
 	if err = pgxscan.ScanAll(&daoContacts, rows); err != nil {
-		return nil, err
+		return nil, log.ErrorWithContext(ctx, err)
 	}
 
 	return r.toDomainContacts(daoContacts)
@@ -271,7 +276,7 @@ func (r *Repository) ReadContactByID(c context.Context, ID uuid.UUID) (response 
 
 	tx, err := r.db.Begin(ctx)
 	if err != nil {
-		return nil, err
+		return nil, log.ErrorWithContext(ctx, err)
 	}
 
 	defer func(ctx context.Context, t pgx.Tx) {
@@ -304,27 +309,31 @@ func (r *Repository) oneContactTx(ctx context.Context, tx pgx.Tx, ID uuid.UUID) 
 
 	query, args, err := builder.ToSql()
 	if err != nil {
-		return nil, err
+		return nil, log.ErrorWithContext(ctx, err)
 	}
 
 	rows, err := tx.Query(ctx, query, args...)
 	if err != nil {
-		return nil, err
+		return nil, log.ErrorWithContext(ctx, err)
 	}
 
 	var daoContact []*dao.Contact
 	if err = pgxscan.ScanAll(&daoContact, rows); err != nil {
-		return nil, err
+		return nil, log.ErrorWithContext(ctx, err)
 	}
 
 	if len(daoContact) == 0 {
-		return nil, errors.New("contact not found")
+		return nil, useCase.ErrContactNotFound
 	}
 
 	return r.toDomainContact(daoContact[0])
 }
 
-func (r *Repository) CountContact(ctx context.Context) (uint64, error) {
+func (r *Repository) CountContact(c context.Context) (uint64, error) {
+
+	span, tmp := opentracing.StartSpanFromContext(c, "CountContact")
+	defer span.Finish()
+	ctx := context.New(tmp)
 
 	var builder = r.genSQL.Select(
 		"COUNT(id)",
@@ -334,14 +343,14 @@ func (r *Repository) CountContact(ctx context.Context) (uint64, error) {
 
 	query, args, err := builder.ToSql()
 	if err != nil {
-		return 0, err
+		return 0, log.ErrorWithContext(ctx, err)
 	}
 
 	var row = r.db.QueryRow(ctx, query, args...)
 	var total uint64
 
 	if err = row.Scan(&total); err != nil {
-		return 0, err
+		return 0, log.ErrorWithContext(ctx, err)
 	}
 
 	return total, nil

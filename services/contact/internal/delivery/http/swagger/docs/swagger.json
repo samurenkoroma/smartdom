@@ -14,7 +14,7 @@
     },
     "basePath": "/",
     "paths": {
-        "/contacts": {
+        "/contacts/": {
             "get": {
                 "description": "Метод позволяет получить список контактов.",
                 "consumes": [
