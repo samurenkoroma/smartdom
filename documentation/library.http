@@ -1,0 +1,12 @@
+GET {{host}}/books/
+
+###
+POST {{host}}/contacts/
+Content-Type: application/json
+
+{
+  "age": 35,
+  "phoneNumber": "+380675251awd771"
+}
+###
+#grant_type=client_credentials&client_id={{client_id}}&client_secret={{client_secret}}&scope={{scope}}
